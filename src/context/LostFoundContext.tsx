@@ -8,6 +8,7 @@ type User = {
   name: string;
   email: string;
   dob: string;
+  role: "user" | "admin"; // Added role field
 };
 
 type LostItem = {
@@ -25,12 +26,15 @@ type LostFoundContextType = {
   users: User[];
   lostItems: LostItem[];
   login: (email: string, name: string, dob: string) => void;
+  adminLogin: (email: string, password: string) => boolean; // Added admin login
   logout: () => void;
   addLostItem: (item: Omit<LostItem, "id" | "dateReported" | "ownerId">) => void;
   updateItemStatus: (itemId: string, status: "lost" | "found") => void;
   getUserItems: (userId: string) => LostItem[];
   getUserById: (userId: string) => User | undefined;
   getAllItems: () => LostItem[];
+  getAllUsers: () => User[]; // Added method to get all users
+  isAdmin: () => boolean; // Added method to check if current user is admin
 };
 
 const LostFoundContext = createContext<LostFoundContextType | undefined>(undefined);
@@ -40,8 +44,9 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 
 // Initial demo data
 const demoUsers: User[] = [
-  { id: "user1", name: "John Doe", email: "john@example.com", dob: "1990-01-01" },
-  { id: "user2", name: "Jane Smith", email: "jane@example.com", dob: "1992-05-15" },
+  { id: "user1", name: "John Doe", email: "john@example.com", dob: "1990-01-01", role: "user" },
+  { id: "user2", name: "Jane Smith", email: "jane@example.com", dob: "1992-05-15", role: "user" },
+  { id: "admin1", name: "Admin User", email: "admin@lostfound.com", dob: "1985-03-20", role: "admin" },
 ];
 
 const demoItems: LostItem[] = [
@@ -100,13 +105,29 @@ export const LostFoundProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // If not, create a new user
     if (!user) {
-      user = { id: generateId(), name, email, dob };
+      user = { id: generateId(), name, email, dob, role: "user" };
       setUsers([...users, user]);
       toast.success("New user registered!");
     }
 
     setCurrentUser(user);
     toast.success("Logged in successfully!");
+  };
+
+  const adminLogin = (email: string, password: string): boolean => {
+    // In a real app, you would validate the password with a hashed version
+    // Here we use a simple check for the demo
+    if (email === "admin@lostfound.com" && password === "admin123") {
+      const admin = users.find(u => u.email === email && u.role === "admin");
+      if (admin) {
+        setCurrentUser(admin);
+        toast.success("Admin logged in successfully!");
+        return true;
+      }
+    }
+    
+    toast.error("Admin login failed. Invalid credentials.");
+    return false;
   };
 
   const logout = () => {
@@ -153,17 +174,28 @@ export const LostFoundProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return lostItems;
   };
 
+  const getAllUsers = () => {
+    return users.filter(user => user.role === "user");
+  };
+
+  const isAdmin = () => {
+    return currentUser?.role === "admin";
+  };
+
   const value = {
     currentUser,
     users,
     lostItems,
     login,
+    adminLogin,
     logout,
     addLostItem,
     updateItemStatus,
     getUserItems,
     getUserById,
     getAllItems,
+    getAllUsers,
+    isAdmin,
   };
 
   return (

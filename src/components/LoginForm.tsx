@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLostFound } from "@/context/LostFoundContext";
+import { Link } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
   const [name, setName] = React.useState("");
@@ -66,6 +67,12 @@ const LoginForm: React.FC = () => {
       >
         Login / Register
       </Button>
+      
+      <div className="text-center mt-4">
+        <Link to="/admin/login" className="text-sm text-gray-500 hover:text-lost-primary">
+          Login as Admin
+        </Link>
+      </div>
     </form>
   );
 };

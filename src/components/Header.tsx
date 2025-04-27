@@ -3,11 +3,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLostFound } from "@/context/LostFoundContext";
-import { Home, Search, User } from "lucide-react";
+import { Home, Search, User, Database } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 const Header: React.FC = () => {
-  const { currentUser, logout } = useLostFound();
+  const { currentUser, logout, isAdmin } = useLostFound();
   const location = useLocation();
   
   return (
@@ -34,13 +34,25 @@ const Header: React.FC = () => {
             <span>Search</span>
           </Link>
           
-          <Link 
-            to="/dashboard" 
-            className={`flex items-center space-x-1 ${location.pathname === "/dashboard" ? "text-lost-primary font-medium" : "text-gray-600 hover:text-lost-primary"}`}
-          >
-            <User size={18} />
-            <span>Dashboard</span>
-          </Link>
+          {currentUser && !isAdmin() && (
+            <Link 
+              to="/dashboard" 
+              className={`flex items-center space-x-1 ${location.pathname === "/dashboard" ? "text-lost-primary font-medium" : "text-gray-600 hover:text-lost-primary"}`}
+            >
+              <User size={18} />
+              <span>Dashboard</span>
+            </Link>
+          )}
+          
+          {currentUser && isAdmin() && (
+            <Link 
+              to="/admin/dashboard" 
+              className={`flex items-center space-x-1 ${location.pathname === "/admin/dashboard" ? "text-lost-primary font-medium" : "text-gray-600 hover:text-lost-primary"}`}
+            >
+              <Database size={18} />
+              <span>Admin</span>
+            </Link>
+          )}
         </nav>
         
         <div className="flex items-center space-x-4">
@@ -48,6 +60,7 @@ const Header: React.FC = () => {
             <div className="flex items-center gap-4">
               <span className="hidden md:block text-sm text-gray-700">
                 Hello, {currentUser.name.split(' ')[0]}
+                {isAdmin() && <span className="ml-1 text-xs bg-lost-primary text-white px-2 py-0.5 rounded">Admin</span>}
               </span>
               <Button 
                 onClick={logout} 
@@ -90,13 +103,25 @@ const Header: React.FC = () => {
             <span className="text-xs mt-1">Search</span>
           </Link>
           
-          <Link 
-            to="/dashboard" 
-            className={`flex flex-col items-center py-2 ${location.pathname === "/dashboard" ? "text-lost-primary" : "text-gray-600"}`}
-          >
-            <User size={20} />
-            <span className="text-xs mt-1">Dashboard</span>
-          </Link>
+          {currentUser && !isAdmin() && (
+            <Link 
+              to="/dashboard" 
+              className={`flex flex-col items-center py-2 ${location.pathname === "/dashboard" ? "text-lost-primary" : "text-gray-600"}`}
+            >
+              <User size={20} />
+              <span className="text-xs mt-1">Dashboard</span>
+            </Link>
+          )}
+          
+          {currentUser && isAdmin() && (
+            <Link 
+              to="/admin/dashboard" 
+              className={`flex flex-col items-center py-2 ${location.pathname === "/admin/dashboard" ? "text-lost-primary" : "text-gray-600"}`}
+            >
+              <Database size={20} />
+              <span className="text-xs mt-1">Admin</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>

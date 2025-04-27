@@ -9,6 +9,8 @@ import Home from "./pages/Home";
 import Search from "./pages/Search";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import AllItems from "./pages/AllItems";
 import NotFound from "./pages/NotFound";
 import Header from "./components/Header";
@@ -31,6 +33,8 @@ const App = () => (
                 <Route path="/search" element={<Search />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/items" element={<AllItems />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
