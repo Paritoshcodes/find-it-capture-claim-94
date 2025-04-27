@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -118,7 +117,8 @@ const Search: React.FC = () => {
             </div>
             
             <CameraRecognition 
-              itemToFind={itemToFind} 
+              itemToFind={itemToFind}
+              userEmail={currentUser?.email}
               onObjectDetected={handleObjectDetected}
             />
           </div>

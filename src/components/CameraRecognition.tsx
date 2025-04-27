@@ -1,128 +1,63 @@
-
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, Search, X } from "lucide-react";
 import { toast } from "sonner";
+import { detectObjects } from "@/utils/objectDetection";
+import { sendFoundItemEmail } from "@/services/emailService";
+import { useCamera } from "@/hooks/useCamera";
 
 interface CameraRecognitionProps {
   itemToFind: string;
+  userEmail?: string;
   onObjectDetected?: (detected: boolean) => void;
 }
 
 const CameraRecognition: React.FC<CameraRecognitionProps> = ({
   itemToFind,
+  userEmail,
   onObjectDetected,
 }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [streaming, setStreaming] = useState(false);
+  const { videoRef, canvasRef, streaming, cameraError, startCamera, stopCamera } = useCamera();
   const [detecting, setDetecting] = useState(false);
   const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Start camera automatically when component mounts
   useEffect(() => {
     startCamera();
-    
-    // Cleanup function
-    return () => {
-      stopCamera();
-    };
   }, []);
 
-  const startCamera = async () => {
-    try {
-      setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false,
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          if (videoRef.current) {
-            videoRef.current.play();
-          }
-        };
-        setMediaStream(stream);
-        setStreaming(true);
-        toast.info("Camera started. Looking for your item...");
-      }
-    } catch (err) {
-      console.error("Error accessing camera:", err);
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      setCameraError(`Could not access camera: ${errorMessage}`);
-      toast.error("Could not access camera. Please check permissions.");
-    }
-  };
-
-  const stopCamera = () => {
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => {
-        track.stop();
-      });
-    }
-    
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    
-    setStreaming(false);
-    setDetecting(false);
-  };
-
-  const startDetection = () => {
+  const startDetection = async () => {
     setDetecting(true);
     
-    // Simulate object detection with random objects
-    // In a real app, this would connect to a trained model API
-    setTimeout(() => {
-      const possibleObjects = [
-        "smartphone", "wallet", "keys", "backpack", "laptop", 
-        "water bottle", "umbrella", "headphones", "glasses", "book"
-      ];
+    try {
+      const objects = await detectObjects(itemToFind);
+      setDetectedObjects(objects);
       
-      // Randomly include the searched item with higher probability if specified
-      const shouldIncludeSearchItem = Math.random() > 0.4;
+      const isItemFound = objects.includes(itemToFind.toLowerCase());
       
-      let detectedItems: string[] = [];
-      const numObjects = Math.floor(Math.random() * 3) + 1; // 1-3 objects
-      
-      for (let i = 0; i < numObjects; i++) {
-        const randomIndex = Math.floor(Math.random() * possibleObjects.length);
-        detectedItems.push(possibleObjects[randomIndex]);
-      }
-      
-      // Add the searched item if probability check passed
-      if (shouldIncludeSearchItem && itemToFind) {
-        detectedItems = [itemToFind.toLowerCase(), ...detectedItems];
-      }
-      
-      // Remove duplicates
-      detectedItems = [...new Set(detectedItems)];
-      
-      setDetectedObjects(detectedItems);
-      
-      // Notify callback if the item was detected
-      if (onObjectDetected) {
-        onObjectDetected(detectedItems.includes(itemToFind.toLowerCase()));
-      }
-      
-      if (detectedItems.includes(itemToFind.toLowerCase())) {
+      if (isItemFound) {
         toast.success(`Found "${itemToFind}"!`);
+        
+        if (userEmail) {
+          await sendFoundItemEmail(itemToFind, userEmail);
+          toast.success("Email notification sent!");
+        }
       }
       
-      // Continue detection or stop
+      if (onObjectDetected) {
+        onObjectDetected(isItemFound);
+      }
+    } catch (error) {
+      console.error("Detection error:", error);
+      toast.error("Error during object detection");
+    } finally {
       setTimeout(() => {
         setDetecting(false);
-      }, 2000);
-      
-    }, 2000);
+      }, 1000);
+    }
   };
 
-  // Draw fake detection rectangle
+  // Draw detection boxes
   useEffect(() => {
     const drawDetectionBoxes = () => {
       if (!canvasRef.current || !videoRef.current || !videoRef.current.videoWidth) return;
@@ -137,18 +72,15 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
       
       if (detecting && detectedObjects.length > 0) {
         detectedObjects.forEach((object, index) => {
-          // Create random box position
           const x = Math.random() * (canvasRef.current!.width - 100);
           const y = Math.random() * (canvasRef.current!.height - 50);
           const width = 100 + Math.random() * 100;
           const height = 50 + Math.random() * 50;
           
-          // Draw rectangle
           ctx.strokeStyle = object.toLowerCase() === itemToFind.toLowerCase() ? '#9b87f5' : '#F97316';
           ctx.lineWidth = 3;
           ctx.strokeRect(x, y, width, height);
           
-          // Draw label
           ctx.fillStyle = object.toLowerCase() === itemToFind.toLowerCase() ? '#9b87f5' : '#F97316';
           ctx.fillRect(x, y - 20, object.length * 9, 20);
           
