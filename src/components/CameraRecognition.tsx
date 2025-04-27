@@ -19,9 +19,21 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
   const [detecting, setDetecting] = useState(false);
   const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  // Start camera automatically when component mounts
+  useEffect(() => {
+    startCamera();
+    
+    // Cleanup function
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const startCamera = async () => {
     try {
+      setCameraError(null);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
         audio: false,
@@ -29,13 +41,19 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play();
+          }
+        };
         setMediaStream(stream);
+        setStreaming(true);
+        toast.info("Camera started. Looking for your item...");
       }
-      
-      setStreaming(true);
-      toast.info("Camera started. Looking for your item...");
     } catch (err) {
       console.error("Error accessing camera:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setCameraError(`Could not access camera: ${errorMessage}`);
       toast.error("Could not access camera. Please check permissions.");
     }
   };
@@ -79,7 +97,7 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
       
       // Add the searched item if probability check passed
       if (shouldIncludeSearchItem && itemToFind) {
-        detectedItems = [itemToFind, ...detectedItems];
+        detectedItems = [itemToFind.toLowerCase(), ...detectedItems];
       }
       
       // Remove duplicates
@@ -104,21 +122,10 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
     }, 2000);
   };
 
-  // Cleanup function
-  useEffect(() => {
-    return () => {
-      if (mediaStream) {
-        mediaStream.getTracks().forEach((track) => {
-          track.stop();
-        });
-      }
-    };
-  }, [mediaStream]);
-
   // Draw fake detection rectangle
   useEffect(() => {
     const drawDetectionBoxes = () => {
-      if (!canvasRef.current || !videoRef.current) return;
+      if (!canvasRef.current || !videoRef.current || !videoRef.current.videoWidth) return;
       
       const ctx = canvasRef.current.getContext('2d');
       if (!ctx) return;
@@ -172,7 +179,7 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
 
   return (
     <div className="flex flex-col items-center space-y-4 w-full max-w-xl mx-auto">
-      <div className="camera-container aspect-video w-full bg-black">
+      <div className="camera-container relative aspect-video w-full bg-black rounded-md overflow-hidden">
         <video 
           ref={videoRef} 
           className="w-full h-full object-cover"
@@ -185,10 +192,10 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
         />
         
         {detecting && (
-          <div className="scanning-animation" />
+          <div className="scanning-animation absolute top-0 left-0 w-full h-full border-2 border-lost-primary animate-scan" />
         )}
         
-        {!streaming && (
+        {!streaming && !cameraError && (
           <div className="absolute inset-0 flex items-center justify-center">
             <Button 
               onClick={startCamera}
@@ -196,6 +203,19 @@ const CameraRecognition: React.FC<CameraRecognitionProps> = ({
             >
               <Camera className="w-4 h-4 mr-2" />
               Turn on Camera
+            </Button>
+          </div>
+        )}
+        
+        {cameraError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+            <p className="text-red-500 mb-2">{cameraError}</p>
+            <Button 
+              onClick={startCamera}
+              className="bg-lost-primary hover:bg-lost-secondary text-white"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              Try Again
             </Button>
           </div>
         )}

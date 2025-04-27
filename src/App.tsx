@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import AllItems from "./pages/AllItems";
 import NotFound from "./pages/NotFound";
 import Header from "./components/Header";
+import "./camera.css";
 
 const queryClient = new QueryClient();
 
