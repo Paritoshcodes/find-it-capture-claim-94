@@ -11,7 +11,7 @@ const Home: React.FC = () => {
       <section className="bg-gradient-to-br from-lost-light to-white p-8 md:p-12 rounded-xl mb-12 shadow-sm">
         <div className="max-w-3xl">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-lost-dark">
-            Automatic Lost and Found System
+            Automated Lost and Found System using Object Recognition
           </h1>
           <p className="text-lg mb-6 text-gray-700">
             Lost something? Our smart object recognition system helps you find lost items

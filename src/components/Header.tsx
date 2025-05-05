@@ -14,7 +14,7 @@ const Header: React.FC = () => {
     <header className="bg-white shadow-sm">
       <div className="container mx-auto py-4 px-4 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <span className="text-xl font-bold text-lost-primary">Find It</span>
+          <span className="text-xl font-bold text-lost-primary">ALFS</span>
         </Link>
         
         <nav className="hidden md:flex items-center space-x-6">
