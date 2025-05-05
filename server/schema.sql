@@ -1,8 +1,8 @@
 
 -- Database schema for Lost & Found system
 
-CREATE DATABASE IF NOT EXISTS lostfound;
-USE lostfound;
+CREATE DATABASE IF NOT EXISTS alfs;
+USE alfs;
 
 -- Objects table (for lost and found items)
 CREATE TABLE IF NOT EXISTS Objects (
